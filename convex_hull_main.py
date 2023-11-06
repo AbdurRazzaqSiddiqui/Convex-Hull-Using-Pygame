@@ -25,12 +25,15 @@ bg_img = pygame.transform.scale(bg_img,(width,height))
 button_color = (0, 71, 189)
 text_color = (255,255,255)
 heading_color = (56, 0, 153)
+button_border_color = heading_color
 button_width = 160
 button_height = 30
 button_margin = 15
-point_color = (255,255,255)
-line_color = (0, 245, 8)
-line_width = 10
+point_color = (30, 0, 255)
+point_bg_color = (255,255,255)
+coord_color = (56, 0, 153)
+line_color = (0,30,255)
+line_width = 1
 point_radius = 8
 font_size = 24
 # Create a menu window
@@ -47,6 +50,7 @@ screen = None
 # Function to create a button
 def draw_button(rect, text, callback):
     pygame.draw.rect(menu_screen, button_color, rect)
+    pygame.draw.rect(menu_screen, button_border_color, rect, 5)  # Draw the border
     text_surface = small_font.render(text, True, text_color)
     text_rect = text_surface.get_rect(center=rect.center)
     menu_screen.blit(text_surface, text_rect)
@@ -95,8 +99,8 @@ def open_main_window(algorithm_no):
     # Function to draw a point
     def draw_point(x, y, color=point_color):
         pygame.draw.circle(screen, color, (x, y), point_radius)
-        pygame.draw.circle(screen, (0,0,0), (x, y), point_radius-3)
-        coords_text = small_font.render(f'({x},{y})', True, text_color)
+        pygame.draw.circle(screen, point_bg_color, (x, y), point_radius-3)
+        coords_text = small_font.render(f'({x},{y})', True, coord_color)
         screen.blit(coords_text, (x + 10, y - 20))
 
     # Function to find the convex hull
@@ -211,7 +215,7 @@ def line_intersect(intersect_no):
     # Function to draw a point on the screen
     def draw_point(x, y, color=point_color,label=None):
         pygame.draw.circle(screen, color, (x, y), point_radius)
-        pygame.draw.circle(screen, (0,0,0), (x, y), point_radius-3)
+        pygame.draw.circle(screen, point_bg_color, (x, y), point_radius-3)
         if label:
             font = pygame.font.Font(None, font_size)
             text = font.render(label, True, color)
@@ -257,9 +261,11 @@ def line_intersect(intersect_no):
                     # Handle the "Reset" button by clearing both lines and resetting flags
                     line1.clear()
                     line2.clear()
+                    drawing_line1 = True
                     line1_ready = False
                     line2_ready = False
-                    intersection_status_displayed = False  # Clear intersection status when resetting
+                    show_intersection_status = False
+                    intersection_status_displayed = True  # Clear intersection status when resetting
                 elif back_button_rect.collidepoint(x, y):
                     # Handle the "Back to Menu" button
                     # You can add code here to go back to the menu screen
