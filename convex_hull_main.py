@@ -178,7 +178,7 @@ def open_main_window(algorithm_no):
 
         # Draw time and space complexity above the button if the button was clicked
         if complexity_button_clicked:
-            complexity_text = small_font.render(f"Time Complexity: {time_complexity} | Space Complexity: {space_complexity}", True, text_color)
+            complexity_text = small_font.render(f"Time Complexity: {time_complexity} | Space Complexity: {space_complexity}", True, heading_color)
             screen.blit(complexity_text, (complexity_button_rect.centerx - complexity_text.get_width() / 2 - 80, complexity_button_rect.y - complexity_text.get_height()-10))
 
         # Draw convex hull
@@ -244,6 +244,16 @@ def line_intersect(intersect_no):
             screen.blit(text, text_rect)
             intersection_status_displayed = True
 
+    def reset_line_points():
+        screen.blit(bg_img,(0,0))
+        line1.clear()
+        line2.clear()
+        line1_ready = False
+        line2_ready = False
+        drawing_line1 = True
+        show_intersection_status = False
+        intersection_status_displayed = False
+
     # Main loop
     drawing_line1 = True
     reset_button_rect = pygame.Rect(width - 180, height - 100, 160, 40)  # Create the reset button rect
@@ -291,16 +301,12 @@ def line_intersect(intersect_no):
 
         # Draw title
         font = pygame.font.Font(None, 36)
-        title_text = font.render("Line Intersection Checker", True, text_color)
+        title_text = font.render("Line Intersection Checker", True, heading_color)
         title_rect = title_text.get_rect(center=(width // 3, 15 + title_text.get_height() // 2))
         screen.blit(title_text, title_rect)
 
         # Always show the "Reset" button
-        pygame.draw.rect(screen, line_color, reset_button_rect)
-        font = pygame.font.Font(None, 20)
-        text = font.render("Reset", True, (0, 0, 0))
-        text_rect = text.get_rect(center=reset_button_rect.center)
-        screen.blit(text, text_rect)
+        draw_button(reset_button_rect, "Reset", reset_line_points)
 
         # Draw the "Back" button
         draw_button(back_button_rect, "Back", sub_menu2)
