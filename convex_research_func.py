@@ -1,78 +1,44 @@
-import random
-import math
+def orientation(p, q, r):
+    """
+    Function to determine the orientation of three points (p, q, r).
+    Returns:
+        0 if the points are collinear
+        1 if the orientation is clockwise
+        -1 if the orientation is counterclockwise
+    """
+    val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+    if val == 0:
+        return 0
+    return 1 if val > 0 else -1
 
-def convex_hull_research(points):
-    def ccw(p1, p2, p3):
-        return (p2[1] - p1[1]) * (p3[0] - p2[0]) - (p2[0] - p1[0]) * (p3[1] - p2[1])
-
-    def graham(points):
-        points = sorted(points, key=lambda x: (x[1], x[0]))
-        upper = []
-        for p in points:
-            while len(upper) >= 2 and ccw(upper[-2], upper[-1], p) <= 0:
-                upper.pop()
-            upper.append(p)
-        return upper
-
-    def divide_groups(points, k):
-        n = len(points)
-        groups = [points[i:i + k] for i in range(0, n, k)]
-        return groups
-
-    def chan(points, k):
-        if len(points) <= k:
-            return graham(points)
-
-        groups = divide_groups(points, k)
-        hulls = [chan(group, k) for group in groups]
-        merged_hull = merge_hulls(hulls)
-        return graham(merged_hull)
-
-    def merge_hulls(hulls):
-        if len(hulls) == 1:
-            return hulls[0]
-        if len(hulls) == 2:
-            return merge_two_hulls(hulls[0], hulls[1])
-        if len(hulls) % 2 != 0:
-            extra_hull = hulls.pop()
-        half = len(hulls) // 2
-        left_half = merge_hulls(hulls[:half])
-        right_half = merge_hulls(hulls[half:])
-        return merge_two_hulls(left_half, right_half)
-
-    def merge_two_hulls(left_hull, right_hull):
-        left_tangent = (0, 0)
-        right_tangent = (0, 0)
-        left_index = 0
-        right_index = 0
-
-        for i in range(len(left_hull)):
-            if left_hull[i][0] < left_tangent[0]:
-                left_tangent = left_hull[i]
-                left_index = i
-
-        for i in range(len(right_hull)):
-            if right_hull[i][0] > right_tangent[0]:
-                right_tangent = right_hull[i]
-                right_index = i
-
-        while True:
-            no_turn = True
-
-            while ccw(left_hull[left_index], right_hull[right_index], right_hull[(right_index + 1) % len(right_hull)]) <= 0:
-                right_index = (right_index + 1) % len(right_hull)
-                no_turn = False
-
-            while ccw(left_hull[(left_index - 1 + len(left_hull)) % len(left_hull)], left_hull[left_index], right_hull[right_index]) >= 0:
-                left_index = (left_index - 1 + len(left_hull)) % len(left_hull)
-                no_turn = False
-
-            if no_turn:
-                break
-
-        upper_hull = left_hull[:left_index + 1] + right_hull[right_index:]
-        lower_hull = right_hull[:right_index + 1] + left_hull[left_index:]
-
-        return upper_hull + lower_hull
-
-    return chan(points, 2)
+def convex_hull_andrews(points):
+    """
+    Andrew's Monotone Chain algorithm for finding the convex hull.
+    Input:
+        points: A list of tuples representing 2D points [(x1, y1), (x2, y2), ...].
+    Returns:
+        A list of tuples representing the convex hull in counterclockwise order.
+    """
+    # Sort the points lexicographically (by x-coordinate, then by y-coordinate)
+    points = sorted(points)
+    
+    # Initialize upper and lower hulls
+    upper_hull = []
+    lower_hull = []
+    
+    # Build the upper hull
+    for point in points:
+        while len(upper_hull) >= 2 and orientation(upper_hull[-2], upper_hull[-1], point) != -1:
+            upper_hull.pop()
+        upper_hull.append(point)
+    
+    # Build the lower hull
+    for point in reversed(points):
+        while len(lower_hull) >= 2 and orientation(lower_hull[-2], lower_hull[-1], point) != -1:
+            lower_hull.pop()
+        lower_hull.append(point)
+    
+    # Concatenate the upper and lower hulls to get the convex hull
+    convex_hull = upper_hull[:-1] + lower_hull[:-1]
+    
+    return convex_hull
