@@ -2,6 +2,9 @@ import matplotlib.path as mpltPath
 from convex_graham_scan_func import convex_hull_grahamscan 
 
 def convex_hull_quickelimination(points):
+    if len(points) < 3:
+        return points  # Cannot form a convex hull with less than 3 points
+
     p0x = min(points, key=lambda x: x[0])
     p1x = max(points, key=lambda x: x[0])
     p0y = min(points, key=lambda x: x[1])
@@ -16,7 +19,11 @@ def convex_hull_quickelimination(points):
     while len(s_points) < 3:
         while points[i] in s_points:
             i += 1
-        s_points.append(points[i])
+            if i >= len(points):
+                break  # Avoid index out of range error
+
+        if i < len(points):  # Make sure i is within bounds
+            s_points.append(points[i])
             
     s_points.append(s_points[0])
     path = mpltPath.Path(s_points)
@@ -31,5 +38,4 @@ def convex_hull_quickelimination(points):
             arr.append(i)
     convex_hull = convex_hull_grahamscan(arr)
     
-    return (convex_hull)
-
+    return convex_hull

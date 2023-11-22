@@ -1,4 +1,5 @@
 import pygame
+import pygame.gfxdraw
 import sys
 import timeit
 from pygame.locals import *
@@ -10,35 +11,34 @@ from convex_research_func import convex_hull_andrews
 from line_intersect_func import line_intersection_checker_algebra
 from line_intersect_func import line_intersection_checker_CCW
 from line_intersect_func import line_intersection_checker_research
-# from pyvidplayer import Video
-# vid = Video("hello.mp4")
-# vid.draw(menu_screen,(0,0))
-# while True:
-#     vid.draw(menu_screen,(0,0))
-#     pygame.display.update()
-# Initialize Pygame
 
 pygame.init()
 
 # Constants
 width, height = 960, 720
-bg_img = pygame.image.load('image.jpg')
+bg_img = pygame.image.load('backimage.jpeg')
 bg_img = pygame.transform.scale(bg_img,(width,height))
 button_color = (0, 71, 189)
 text_color = (255,255,255)
-heading_color = (56, 0, 153)
-button_border_color = heading_color
+heading_color = (142, 172, 250)
+button_border_color = (56, 0, 153)
 button_width = 160
 button_height = 30
 button_margin = 15
-point_color = (30, 0, 255)
+point_color = (142, 172, 250)
 point_bg_color = (255,255,255)
 coord_color = (56, 0, 153)
-line_color = (0,30,255)
+line_color = (142, 172, 250)
+RED = (255,0,0) 
+GREEN = (116,238,21)
+WHITE = (255,255,255)
+glow_color = (0,184,255,170)
 line_width = 1
 point_radius = 8
 font_size = 24
 exec_time = 0 
+time_complexity = '' 
+space_complexity = ''
 # Create a menu window
 menu_screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Convex Hull Visualization - Menu")
@@ -50,15 +50,22 @@ small_font = pygame.font.Font(None, 20)
 # Initialize the screen as None
 screen = None
 
-# Function to create a button
+# Function to create a button with glow
 def draw_button(rect, text, callback):
+    # Draw the glow effect when hovered over
+    if rect.collidepoint(pygame.mouse.get_pos()):
+        pygame.gfxdraw.box(menu_screen, rect.inflate(7, 7), glow_color)
+
+    # Draw the button
     pygame.draw.rect(menu_screen, button_color, rect)
-    pygame.draw.rect(menu_screen, button_border_color, rect, 5)  # Draw the border
+    pygame.draw.rect(menu_screen, button_border_color, rect, 3)  # Draw the border
     text_surface = small_font.render(text, True, text_color)
     text_rect = text_surface.get_rect(center=rect.center)
     menu_screen.blit(text_surface, text_rect)
-    if rect.collidepoint(pygame.mouse.get_pos()):
-        if pygame.mouse.get_pressed()[0]:
+
+    # Check if the button is clicked and execute the callback
+    if rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+        if callback is not None:
             callback()
 
 def draw_paragraph(text, font, color, x, y, url_color, url_callback, url_text):
@@ -174,25 +181,77 @@ def open_main_window(algorithm_no):
     def draw_point(x, y, color=point_color):
         pygame.draw.circle(screen, color, (x, y), point_radius)
         pygame.draw.circle(screen, point_bg_color, (x, y), point_radius-3)
-        coords_text = small_font.render(f'({x},{y})', True, coord_color)
+
+        coords_text = small_font.render(f'({x},{y})', True, color)
         screen.blit(coords_text, (x + 10, y - 20))
 
-    # Function to find the convex hull
+    min_y_index = 0
+    # Function to draw convex hull
+    def draw_convex_hull(convex_hull, current_point_index, delay=1000):
+        # Find the point with the minimum y-coordinate
+        min_y_point = min(points, key=lambda p: p[1])
+        min_y_index = points.index(min_y_point)
+
+        # Draw points and coordinates
+        for i, point in enumerate(points):
+            if i == min_y_index:
+                draw_point(point[0], point[1], RED)
+                # Draw text above the initial point
+                font = pygame.font.Font(None, 20)
+                text_surface = font.render("Initial Point", True, RED)
+                text_rect = text_surface.get_rect(center=(point[0], point[1] - 30))
+                screen.blit(text_surface, text_rect)
+            else:
+                draw_point(point[0], point[1], GREEN if i == current_point_index else line_color)
+
+        if len(convex_hull) >= 3:
+            for i in range(len(convex_hull) - 1):
+                pygame.draw.lines(screen, line_color, False, [convex_hull[i], convex_hull[i + 1]], 2)
+                pygame.display.flip()
+                pygame.time.delay(delay)
+
+            # Draw the closing edge
+            pygame.draw.lines(screen, line_color, False, [convex_hull[-1], convex_hull[0]], 2)
+            pygame.display.flip()
+            pygame.time.delay(delay)
+
+            # Redraw points to remove non-convex hull edges
+            for point in points:
+                draw_point(point[0], point[1], GREEN if point in convex_hull else WHITE)
+
+    # Your find_convex_hull function with animation
     def find_convex_hull():
-        nonlocal convex_hull
+        nonlocal convex_hull, complexity_button_clicked, min_y_index
+        points_to_process = [point for point in points if not is_point_in_button(point)]
+        convex_hull = []
+
         global exec_time
         s = timeit.default_timer()
-        if algorithm_no == 1:
-            convex_hull = convex_hull_bruteforce([point for point in points if not is_point_in_button(point)])
-        elif algorithm_no == 2:
-            convex_hull = convex_hull_grahamscan([point for point in points if not is_point_in_button(point)])
-        elif algorithm_no == 3: 
-            convex_hull = convex_hull_jarvismarch([point for point in points if not is_point_in_button(point)])   
-        elif algorithm_no == 4:
-            convex_hull= convex_hull_quickelimination([point for point in points if not is_point_in_button(point)])
-        elif algorithm_no == 5:
-            convex_hull = convex_hull_andrews([point for point in points if not is_point_in_button(point)])     
-        exec_time = timeit.default_timer() - s   
+
+        # Find the index of the point with the minimum y-coordinate
+        min_y_index = min(range(len(points_to_process)), key=lambda i: points_to_process[i][1])
+
+        for i in range(len(points_to_process)):
+            if algorithm_no == 1:
+                convex_hull = convex_hull_bruteforce(points_to_process[:i+1])
+            elif algorithm_no == 2:
+                # If using Graham's scan, sort the points by (y, x) before calling the algorithm
+                sorted_points = sorted(points_to_process[:i+1], key=lambda p: (p[1], p[0]))
+                convex_hull = convex_hull_grahamscan(sorted_points)
+            elif algorithm_no == 3: 
+                # If using Jarvis March, sort the points by (y, x) before calling the algorithm
+                sorted_points = sorted(points_to_process[:i+1], key=lambda p: (p[1], p[0]))
+                convex_hull = convex_hull_jarvismarch(sorted_points)   
+            elif algorithm_no == 4:
+                convex_hull = convex_hull_quickelimination(points_to_process[:i+1])
+            elif algorithm_no == 5:
+                # If using Andrew's monotone chain, sort the points by (y, x) before calling the algorithm
+                sorted_points = sorted(points_to_process[:i+1], key=lambda p: (p[1], p[0]))
+                convex_hull = convex_hull_andrews(sorted_points)
+
+            exec_time = timeit.default_timer() - s      
+            draw_convex_hull(convex_hull, i)
+            pygame.time.delay(250)  # Introduce a delay for animation
 
     # Function to reset points and clear the convex hull
     def reset_points():
