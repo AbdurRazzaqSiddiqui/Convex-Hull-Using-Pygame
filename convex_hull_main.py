@@ -185,24 +185,11 @@ def open_main_window(algorithm_no):
         coords_text = small_font.render(f'({x},{y})', True, color)
         screen.blit(coords_text, (x + 10, y - 20))
 
-    min_y_index = 0
     # Function to draw convex hull
     def draw_convex_hull(convex_hull, current_point_index, delay=1000):
-        # Find the point with the minimum y-coordinate
-        min_y_point = min(points, key=lambda p: p[1])
-        min_y_index = points.index(min_y_point)
-
         # Draw points and coordinates
         for i, point in enumerate(points):
-            if i == min_y_index:
-                draw_point(point[0], point[1], RED)
-                # Draw text above the initial point
-                font = pygame.font.Font(None, 20)
-                text_surface = font.render("Initial Point", True, RED)
-                text_rect = text_surface.get_rect(center=(point[0], point[1] - 30))
-                screen.blit(text_surface, text_rect)
-            else:
-                draw_point(point[0], point[1], GREEN if i == current_point_index else line_color)
+            draw_point(point[0], point[1], GREEN if i == current_point_index else line_color)
 
         if len(convex_hull) >= 3:
             for i in range(len(convex_hull) - 1):
@@ -221,15 +208,12 @@ def open_main_window(algorithm_no):
 
     # Your find_convex_hull function with animation
     def find_convex_hull():
-        nonlocal convex_hull, complexity_button_clicked, min_y_index
+        nonlocal convex_hull, complexity_button_clicked
         points_to_process = [point for point in points if not is_point_in_button(point)]
         convex_hull = []
 
         global exec_time
         s = timeit.default_timer()
-
-        # Find the index of the point with the minimum y-coordinate
-        min_y_index = min(range(len(points_to_process)), key=lambda i: points_to_process[i][1])
 
         for i in range(len(points_to_process)):
             if algorithm_no == 1:
@@ -251,7 +235,8 @@ def open_main_window(algorithm_no):
 
             exec_time = timeit.default_timer() - s      
             draw_convex_hull(convex_hull, i)
-            pygame.time.delay(250)  # Introduce a delay for animation
+            pygame.time.delay(250)
+
 
     # Function to reset points and clear the convex hull
     def reset_points():
